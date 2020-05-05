@@ -73,9 +73,9 @@ class Block {
 }
 
 class AvantBlock {
-    constructor(gridSize, cellSize=50) {
+    constructor(gridSize, canvasSize) {
         this.gridSize = gridSize
-        this.cellSize = cellSize
+        this.cellSize = canvasSize/gridSize
         this.blocks = []
 
         // Initialize the center cell with a Block moving up
@@ -129,21 +129,37 @@ class AvantBlock {
     }
 }
 
-bpm = 80
+let bpm = 80
+let isUp = true
 let started = false
-let grid = new AvantBlock(9)
+let canvasSize = 512
+let grid = new AvantBlock(9, canvasSize)
 
 // Start draw loop
 function mousePressed() {
+    // TODO Don't add Block on intial mouse press
+    if (mouseX < width && mouseX > 0 && mouseY < height && mouseY > 0) {
+        let gridSize = grid.gridSize
+        let cellSize = grid.cellSize
+        let bottomYPos = cellSize * gridSize
+        let x = Math.floor(mouseX/cellSize) + 1
+        let y = Math.floor(((bottomYPos - mouseY)/cellSize)) + 1
+        // TODO Make direction of created block determined by HTML button
+        isUp = !isUp
+        let dir = (isUp) ? 'up' : 'right'
+        grid.blocks.push(new Block(x, y, dir))
+    }
     started = true
 }
 
 function setup() {
     createDiv("Click to start")
+    frameRate(Math.floor(2*4*bpm/60))
     // 2* is used b/c each grid cell is an 1/8th note
     // 4* is used b/c we want to play a note every 1/4 note
-    frameRate(Math.floor(2*4*bpm/60))
-    createCanvas(512, 512)
+    
+    pixelDensity(1) // Normalize for high density displays
+    createCanvas(canvasSize, canvasSize)
 }
 
 function draw() {
