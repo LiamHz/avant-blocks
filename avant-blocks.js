@@ -4,6 +4,16 @@ class Block {
         this.y = y
         this.direction = direction
         this.isWall = isWall
+        this.osc = new p5.TriOsc()
+    }
+
+    playNote(note) {
+        let osc = this.osc
+        osc.start()
+        osc.amp(0)
+        osc.freq(midiToFreq(note))
+        osc.fade(0.5, 0.1) // Fade in (i.e. attack)
+        osc.fade(0.0, 0.4) // Fade out(i.e. release)
     }
 
     updatePosition() {
@@ -27,18 +37,25 @@ class Block {
     }
 
     reverseDirection() {
+        // Midi A-minor pentatonic scale
+        // TODO Dynamically extend to `gridSize` notes
+        scale = [57, 60, 62, 64, 67, 69, 72, 74, 76]
         switch(this.direction) {
             case 'up':
                 this.direction = 'down'
+                this.playNote(scale[this.x])
                 break
             case 'down':
                 this.direction = 'up'
+                this.playNote(scale[this.x])
                 break
             case 'left':
                 this.direction = 'right'
+                this.playNote(scale[this.y])
                 break
             case 'right':
                 this.direction = 'left'
+                this.playNote(scale[this.y])
                 break
         }
     }
@@ -112,16 +129,30 @@ class AvantBlock {
     }
 }
 
-grid = new AvantBlock(9)
-bpm = 120
+bpm = 80
+let started = false
+let grid = new AvantBlock(9)
+
+// Start draw loop
+function mousePressed() {
+    started = true
+}
 
 function setup() {
-    frameRate(Math.floor(bpm/60))
+    createDiv("Click to start")
+    // 2* is used b/c each grid cell is an 1/8th note
+    // 4* is used b/c we want to play a note every 1/4 note
+    frameRate(Math.floor(2*4*bpm/60))
     createCanvas(512, 512)
 }
 
 function draw() {
     // TODO Add creation of block upon mouse click in grid
-    grid.updateBlocks()
-    grid.drawBlocks()
+
+    // Wait until mousePressed() has occurred
+    // Required due to Chrome security features with audio
+    if (started) {
+        grid.drawBlocks()
+        grid.updateBlocks()
+    }
 }
