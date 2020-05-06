@@ -4,11 +4,13 @@ class Block {
         this.y = y
         this.direction = direction
         this.isWall = isWall
+
         this.osc = new p5.TriOsc()
     }
 
     playNote(note) {
         let osc = this.osc
+
         osc.start()
         osc.amp(0)
         osc.freq(midiToFreq(note))
@@ -17,9 +19,6 @@ class Block {
     }
 
     updatePosition() {
-        // TODO Add handling for wall collisions
-        // TODO Add handling for cell collisions
-
         switch(this.direction) {
             case 'up':
                 this.y += 1
@@ -39,7 +38,8 @@ class Block {
     reverseDirection() {
         // Midi A-minor pentatonic scale
         // TODO Dynamically extend to `gridSize` notes
-        scale = [57, 60, 62, 64, 67, 69, 72, 74, 76]
+        //scale = [57, 60, 62, 64, 67, 69, 72, 74, 76] // A minor
+        scale = [60, 62, 63, 67, 69, 72, 74, 75, 79] // C Akebono
         switch(this.direction) {
             case 'up':
                 this.direction = 'down'
@@ -56,6 +56,23 @@ class Block {
             case 'right':
                 this.direction = 'left'
                 this.playNote(scale[this.y])
+                break
+        }
+    }
+
+    collideWithBlock() {
+        switch(this.direction) {
+            case 'up':
+                this.direction = 'left'
+                break
+            case 'down':
+                this.direction = 'right'
+                break
+            case 'left':
+                this.direction = 'up'
+                break
+            case 'right':
+                this.direction = 'down'
                 break
         }
     }
@@ -80,19 +97,52 @@ class AvantBlock {
 
         // Initialize the center cell with a Block moving up
         let centerPos = Math.floor(gridSize / 2)
-        this.blocks.push(new Block(centerPos, centerPos, 'up'))
-        this.blocks.push(new Block(centerPos, centerPos, 'right'))
     }
 
+    arraysEqual(a, b) {
+        if (a === b) return true;
+        if (a == null || b == null) return false;
+        if (a.length != b.length) return false;
+
+        for (let i = 0; i < a.length; ++i) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    isBlockCollision(x, y, blockPositions) {
+        let position = [x, y]
+        let samePositionCounter = 0
+        blockPositions.forEach((positionToCheck) => {
+            if (this.arraysEqual(position, positionToCheck)) {
+                samePositionCounter += 1
+            }
+        })
+        return samePositionCounter >= 2
+    }
+
+    // Move blocks based on collision or lack of
     updateBlocks() {
+        // Store all block positions for block-block collision detection
+        // TODO Refactor block-block collision detection from O(n^2) to O(n)
+        let blockPositions = []
         this.blocks.forEach((block) => {
-            // Check for wall colision
+            blockPositions.push([block.x, block.y])
+        })
+
+        this.blocks.forEach((block) => {
             let x =  block.x
             let y =  block.y
+
+            // Block-wall colision
             if (x == 1 || x == this.gridSize || y == 1 || y == this.gridSize) {
                 block.reverseDirection()
                 block.updatePosition()
-            // TODO Add check for block-block collisions
+            // Block-block collision
+            } else if (this.isBlockCollision(x, y, blockPositions)) {
+                block.collideWithBlock()
+                block.updatePosition()
+            // No collision
             } else {
                 block.updatePosition()
             }
@@ -130,14 +180,15 @@ class AvantBlock {
 }
 
 let bpm = 80
-let isUp = true
+//let isUp = true
 let started = false
 let canvasSize = 512
 let grid = new AvantBlock(9, canvasSize)
 
 // Start draw loop
 function mousePressed() {
-    // TODO Don't add Block on intial mouse press
+    // TODO Fix spawning of blocks on edge of grid
+    // TODO Fix (prevent?) spawning of blocks when clicking on a cell with a block already present
     if (mouseX < width && mouseX > 0 && mouseY < height && mouseY > 0) {
         let gridSize = grid.gridSize
         let cellSize = grid.cellSize
@@ -145,9 +196,7 @@ function mousePressed() {
         let x = Math.floor(mouseX/cellSize) + 1
         let y = Math.floor(((bottomYPos - mouseY)/cellSize)) + 1
         // TODO Make direction of created block determined by HTML button
-        isUp = !isUp
-        let dir = (isUp) ? 'up' : 'right'
-        grid.blocks.push(new Block(x, y, dir))
+        grid.blocks.push(new Block(x, y, 'up'))
     }
     started = true
 }
@@ -163,12 +212,12 @@ function setup() {
 }
 
 function draw() {
-    // TODO Add creation of block upon mouse click in grid
-
     // Wait until mousePressed() has occurred
     // Required due to Chrome security features with audio
     if (started) {
         grid.drawBlocks()
         grid.updateBlocks()
+    } else {
+        grid.drawGrid()
     }
 }
