@@ -6,14 +6,20 @@ class Block {
         this.isWall = isWall
 
         this.osc = new p5.TriOsc()
+        this.delay = new p5.Delay()
+        this.reverb = new p5.Reverb()
     }
 
     playNote(note) {
         let osc = this.osc
+        let delay = this.delay
+        let reverb = this.reverb
 
         osc.start()
         osc.amp(0)
         osc.freq(midiToFreq(note))
+        delay.process(osc, 0.4, 0.5, 2300)
+        reverb.process(osc, 1.5, 5)
         osc.fade(0.5, 0.1) // Fade in (i.e. attack)
         osc.fade(0.0, 0.4) // Fade out(i.e. release)
     }
@@ -135,10 +141,14 @@ class AvantBlock {
             let y =  block.y
 
             // Block-wall colision
-            if (x == 1 || x == this.gridSize || y == 1 || y == this.gridSize) {
+            if (((x == 1 || x == this.gridSize) && 
+               + (block.direction == 'left' || block.direction == 'right')) || 
+               + ((y == 1 || y == this.gridSize) &&
+               + (block.direction == 'up' || block.direction == 'down'))) {
                 block.reverseDirection()
                 block.updatePosition()
             // Block-block collision
+            // TODO Add check for when blocks collide by moving past each other (t=1, they're adjacent, t=2 they've swapped places)
             } else if (this.isBlockCollision(x, y, blockPositions)) {
                 block.collideWithBlock()
                 block.updatePosition()
@@ -179,7 +189,7 @@ class AvantBlock {
     }
 }
 
-let bpm = 80
+let bpm = 150
 //let isUp = true
 let started = false
 let canvasSize = 512
@@ -187,7 +197,6 @@ let grid = new AvantBlock(9, canvasSize)
 
 // Start draw loop
 function mousePressed() {
-    // TODO Fix spawning of blocks on edge of grid
     // TODO Fix (prevent?) spawning of blocks when clicking on a cell with a block already present
     if (mouseX < width && mouseX > 0 && mouseY < height && mouseY > 0) {
         let gridSize = grid.gridSize
@@ -203,9 +212,8 @@ function mousePressed() {
 
 function setup() {
     createDiv("Click to start")
-    frameRate(Math.floor(2*4*bpm/60))
+    frameRate(Math.floor(2*bpm/60))
     // 2* is used b/c each grid cell is an 1/8th note
-    // 4* is used b/c we want to play a note every 1/4 note
     
     pixelDensity(1) // Normalize for high density displays
     createCanvas(canvasSize, canvasSize)
