@@ -18,10 +18,12 @@ class Block {
         osc.start()
         osc.amp(0)
         osc.freq(midiToFreq(note))
-        delay.process(osc, 0.4, 0.5, 2300)
-        reverb.process(osc, 1.5, 5)
         osc.fade(0.5, 0.1) // Fade in (i.e. attack)
         osc.fade(0.0, 0.4) // Fade out(i.e. release)
+
+        // Effects
+        delay.process(osc, 0.4, 0.5, 2300)
+        reverb.process(osc, 1.5, 5)
     }
 
     updatePosition() {
@@ -42,26 +44,26 @@ class Block {
     }
 
     reverseDirection() {
-        // Midi A-minor pentatonic scale
+        // Midi scales
         // TODO Dynamically extend to `gridSize` notes
-        //scale = [57, 60, 62, 64, 67, 69, 72, 74, 76] // A minor
+        // scale = [57, 60, 62, 64, 67, 69, 72, 74, 76] // A minor
         scale = [60, 62, 63, 67, 69, 72, 74, 75, 79] // C Akebono
         switch(this.direction) {
             case 'up':
                 this.direction = 'down'
-                this.playNote(scale[this.x])
+                this.playNote(scale[this.x-1])
                 break
             case 'down':
                 this.direction = 'up'
-                this.playNote(scale[this.x])
+                this.playNote(scale[this.x-1])
                 break
             case 'left':
                 this.direction = 'right'
-                this.playNote(scale[this.y])
+                this.playNote(scale[this.y-1])
                 break
             case 'right':
                 this.direction = 'left'
-                this.playNote(scale[this.y])
+                this.playNote(scale[this.y-1])
                 break
         }
     }
@@ -106,7 +108,8 @@ class AvantBlock {
     }
 
     arraysEqual(a, b) {
-        if (a === b) return true;
+        if
+        (a === b) return true;
         if (a == null || b == null) return false;
         if (a.length != b.length) return false;
 
@@ -141,10 +144,11 @@ class AvantBlock {
             let y =  block.y
 
             // Block-wall colision
-            if (((x == 1 || x == this.gridSize) && 
-               + (block.direction == 'left' || block.direction == 'right')) || 
-               + ((y == 1 || y == this.gridSize) &&
-               + (block.direction == 'up' || block.direction == 'down'))) {
+            // TODO Add visual highlight on corresponding row / column to signify note being played
+            if (((x == 1) && (block.direction == 'left')) 
+              + ((y == 1) && (block.direction == 'down')) ||
+              + ((x == this.gridSize) && (block.direction == 'right')) 
+              + ((y == this.gridSize) && (block.direction == 'up'))) {
                 block.reverseDirection()
                 block.updatePosition()
             // Block-block collision
@@ -190,13 +194,16 @@ class AvantBlock {
 }
 
 let bpm = 150
-//let isUp = true
 let started = false
 let canvasSize = 512
 let grid = new AvantBlock(9, canvasSize)
 
 // Start draw loop
 function mousePressed() {
+    // TODO Add BPM display
+    // TODO Add scale display
+    // TODO Add buttons to change BPM
+    // TODO Add buttons to change scale
     // TODO Fix (prevent?) spawning of blocks when clicking on a cell with a block already present
     if (mouseX < width && mouseX > 0 && mouseY < height && mouseY > 0) {
         let gridSize = grid.gridSize
