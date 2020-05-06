@@ -218,12 +218,12 @@ function mousePressed() {
 }
 
 function setup() {
-    createDiv("Click to start")
     frameRate(Math.floor(2*bpm/60))
     // 2* is used b/c each grid cell is an 1/8th note
     
     pixelDensity(1) // Normalize for high density displays
-    createCanvas(canvasSize, canvasSize)
+    myCanvas = createCanvas(canvasSize, canvasSize)
+    myCanvas.parent('container')
 }
 
 function draw() {

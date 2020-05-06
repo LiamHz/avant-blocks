@@ -3,22 +3,15 @@
         <script src="lib/p5.min.js"></script>
         <script src="lib/p5.sound.min.js"></script>
         <script src="avant-blocks.js"></script>
+        <link rel="stylesheet" href="style.css" type="text/css" />
     </head>
     <body>
-        <!--
-        <button>Play</button>
-
-        <script>
-            let context
-            window.onload = () => {
-                context = new AudioContext()
-            }
-            document.querySelector('button').addEventListener('click', function() {
-                context.resume().then(() => {
-                    console.log('Playback resumed successfully');
-                });
-            });
-        </script>
-        -->
+        <div id="container">
+            <div id="title">
+                <h1>Avant Blocks</h1>
+                <p>Procedurally generated music with cellular automata</p>
+                <p>Click anywhere in the grid to start</p>
+            </div>
+        </div>
     </body>
 </html>
